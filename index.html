@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPIKE: Whispered Echoes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:         #0b0a07;
+  --surface:    #131009;
+  --surface2:   #181408;
+  --border:     #28220e;
+  --border-hi:  #362e14;
+  --text:       #bab89a;
+  --text-dim:   #625e42;
+  --text-hi:    #e2debb;
+  --gold:       #c49a18;
+  --gold-dim:   #7a5e0c;
+  --gold-pale:  #1e1800;
+  --red:        #8a2020;
+  --red-bright: #c03030;
+  --amber:      #d4a420;
+  --amber-dim:  #8a6410;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow Condensed', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(0,0,0,.05) 3px, rgba(0,0,0,.05) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── LOCK SCREEN ── */
+#lock-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px 40px;
+}
+
+.top-band {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: var(--gold-dim);
+  padding: 3px 20px;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  color: var(--bg);
+  z-index: 200;
+  flex-shrink: 0;
+}
+
+.lock-box {
+  background: var(--surface2);
+  border: 1px solid var(--border-hi);
+  border-top: 2px solid var(--gold-dim);
+  padding: 48px 44px 40px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  position: relative;
+}
+
+.lock-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
+
+.lock-stamp {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px;
+  letter-spacing: .24em;
+  color: var(--amber);
+  border: 1px solid var(--amber-dim);
+  padding: 3px 10px;
+  display: inline-block;
+  margin-bottom: 18px;
+  transform: rotate(-.4deg);
+}
+
+.lock-logo {
+  width: 320px;
+  height: 320px;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  margin: 0 auto -8px;
+  display: block;
+}
+
+.lock-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .26em;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+.lock-divider {
+  border: none;
+  border-top: 1px solid var(--border-hi);
+  margin: 0 0 26px;
+}
+
+.lock-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: .22em;
+  color: var(--gold);
+  margin-bottom: 8px;
+  display: block;
+  text-align: left;
+}
+
+.lock-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-hi);
+  border-bottom: 2px solid var(--gold-dim);
+  color: var(--text-hi);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  letter-spacing: .12em;
+  padding: 11px 14px;
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color .15s, background .15s;
+  caret-color: var(--gold);
+  text-align: center;
+}
+
+.lock-input:focus {
+  border-bottom-color: var(--gold);
+  background: rgba(196,154,24,.03);
+}
+
+.lock-input::placeholder {
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: .18em;
+}
+
+.lock-btn {
+  width: 100%;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold);
+  color: var(--text-hi);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .28em;
+  padding: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 12px;
+}
+
+.lock-btn:hover { background: var(--gold); color: var(--bg); }
+
+.lock-error {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .16em;
+  color: var(--red-bright);
+  background: rgba(138,32,32,.1);
+  border: 1px solid var(--red);
+  padding: 7px 12px;
+  margin-top: 4px;
+  display: none;
+}
+
+.lock-error.visible { display: block; animation: shake .3s ease; }
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-5px); }
+  75%      { transform: translateX(5px); }
+}
+
+.lock-footer-note {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  margin-top: 20px;
+  line-height: 1.8;
+}
+
+/* ── MAIN CONTENT ── */
+#main-content { display: none; flex-direction: column; flex: 1; }
+
+.main-top-band {
+  background: var(--gold-dim);
+  padding: 3px 20px;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  color: var(--bg);
+  flex-shrink: 0;
+}
+
+.main-wrap {
+  flex: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 60px 24px 80px;
+  width: 100%;
+}
+
+.stamp {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: .28em;
+  color: var(--amber);
+  border: 1px solid var(--amber-dim);
+  padding: 3px 12px;
+  display: inline-block;
+  margin-bottom: 16px;
+  transform: rotate(-.4deg);
+}
+
+h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 80px);
+  letter-spacing: .12em;
+  color: var(--text-hi);
+  line-height: .95;
+  margin-bottom: 6px;
+}
+
+h1 span { color: var(--gold); }
+
+.subtitle {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .3em;
+  color: var(--text-dim);
+  margin-bottom: 48px;
+}
+
+.divider { border: none; border-top: 1px solid var(--border-hi); margin: 0 0 40px; }
+
+.section-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .22em;
+  color: var(--gold);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-hi);
+  margin-bottom: 16px;
+}
+
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.doc-card {
+  background: var(--surface2);
+  border: 1px solid var(--border-hi);
+  border-top: 2px solid var(--gold-dim);
+  padding: 16px;
+  text-decoration: none;
+  display: block;
+  transition: all .15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.doc-card:hover { border-top-color: var(--gold); background: #1c1608; }
+
+.doc-card::after {
+  content: '→';
+  position: absolute;
+  bottom: 14px; right: 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--gold-dim);
+  transition: color .15s;
+}
+
+.doc-card:hover::after { color: var(--gold); }
+
+.card-doc-id {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px;
+  letter-spacing: .18em;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: .2em;
+  color: var(--text-hi);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.45;
+  padding-bottom: 20px;
+}
+
+.save-guide {
+  background: var(--surface);
+  border: 1px solid var(--border-hi);
+  border-left: 3px solid var(--gold-dim);
+  padding: 18px 20px;
+  margin-bottom: 48px;
+}
+
+.save-guide h2 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .22em;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.save-guide p { font-size: 14px; color: var(--text); line-height: 1.55; margin-bottom: 10px; }
+.save-guide p:last-child { margin-bottom: 0; }
+.save-guide strong { color: var(--text-hi); font-weight: 600; }
+.save-guide code {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  background: rgba(196,154,24,.1);
+  color: var(--gold);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .main-top-band { font-size: 7px; }
+  .doc-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div class="top-band">
+    <span>■ UNITED GLOBAL DIRECTORATE ■ CLASSIFIED ■</span>
+    <span>OPERATIVE PORTAL // UGD DIV IV</span>
+    <span>■ YEAR 6 POST-RESET ■</span>
+  </div>
+
+  <div class="lock-box">
+    <div class="lock-stamp">■ CLASSIFIED ■ AUTHORIZED PERSONNEL ONLY ■</div>
+
+    <img class="lock-logo" src="SPIKE_-_Whispered_Echoes.png" alt="SPIKE: Whispered Echoes">
+    <div class="lock-sub">UGD FIELD OPERATIVE PORTAL</div>
+
+    <hr class="lock-divider">
+
+    <label class="lock-label" for="passInput">■ ENTER ACCESS CODE</label>
+    <input class="lock-input" type="password" id="passInput" placeholder="ACCESS CODE REQUIRED" autocomplete="off" spellcheck="false">
+    <button class="lock-btn" onclick="checkPass()">▶ AUTHENTICATE</button>
+    <div class="lock-error" id="lock-error">■ ACCESS DENIED — INVALID CREDENTIALS ■</div>
+
+    <div class="lock-footer-note">
+      UGD DIV IV // OPERATIVE PORTAL<br>
+      UNAUTHORIZED ACCESS IS A DIRECTORATE VIOLATION
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content">
+  <div class="main-top-band">
+    <span>■ UNITED GLOBAL DIRECTORATE ■ CLASSIFIED ■</span>
+    <span>OPERATIVE PORTAL // UGD DIV IV</span>
+    <span>■ YEAR 6 POST-RESET ■</span>
+  </div>
+
+  <div class="main-wrap">
+    <div class="stamp">■ CLASSIFIED ■ AUTHORIZED PERSONNEL ONLY ■</div>
+
+    <h1>SPIKE<br><span>WHISPERED ECHOES</span></h1>
+    <div class="subtitle">UGD FIELD OPERATIVE DOCUMENT HUB // ITALY RECOVERY OPERATION</div>
+
+    <hr class="divider">
+
+    <div class="section-label">OPERATIVE DOCUMENTS</div>
+
+    <div class="doc-grid">
+      <a class="doc-card" href="WE%20Player%20Guide%20-%20Whispered%20Echoes.html">
+        <div class="card-doc-id">DOC 02-B // BRIEFING PACKET</div>
+        <div class="card-title">PLAYER'S GUIDE</div>
+        <div class="card-desc">Rules overview, setting lore, mechanics reference, and operative creation guidance.</div>
+      </a>
+      <a class="doc-card" href="SPIKE%20Character%20Sheet%20-%20The%20Reeves%20Trials.html">
+        <div class="card-doc-id">DOC 14-C // FIELD DOSSIER</div>
+        <div class="card-title">OPERATIVE DOSSIER</div>
+        <div class="card-desc">Character sheet — attributes, skills, SPIKE scale, vitals, traits, flaws, and field notes.</div>
+      </a>
+      <a class="doc-card" href="WE%20Field%20Guide%20-%20Whispered%20Echoes.html">
+        <div class="card-doc-id">DOC 07-G // FIELD REFERENCE</div>
+        <div class="card-title">FIELD GUIDE</div>
+        <div class="card-desc">In-world reference material — locations, factions, threats, and operational intelligence.</div>
+      </a>
+      <a class="doc-card" href="SPIKE%20Session%200%20-%20The%20Reeves%20Trials.html">
+        <div class="card-doc-id">DOC 00-S // PRE-MISSION</div>
+        <div class="card-title">SESSION 0</div>
+        <div class="card-desc">Session zero materials — safety tools, expectations, character concepts, and table agreements.</div>
+      </a>
+      <a class="doc-card" href="SPIKE%20Safety%20Document%20-%20The%20Reeves%20Trials.html">
+        <div class="card-doc-id">DOC 00-X // TABLE CONTRACT</div>
+        <div class="card-title">SAFETY &amp; TABLE CONTRACT</div>
+        <div class="card-desc">Safety tools, lines and veils, X-card procedures, and table conduct expectations.</div>
+      </a>
+      <a class="doc-card" href="player_docs_we.html">
+        <div class="card-doc-id">DOC IV-V // FIELD INTELLIGENCE</div>
+        <div class="card-title">FIELD VAULT</div>
+        <div class="card-desc">Access code–locked documents, maps, and intelligence issued by Division IV command. Enter your 8-digit code to retrieve.</div>
+      </a>
+    </div>
+
+    <div class="section-label">HOW TO SAVE YOUR DOSSIER</div>
+
+    <div class="save-guide">
+      <h2>■ SAVING &amp; LOADING YOUR CHARACTER</h2>
+      <p>Your <strong>Operative Dossier</strong> automatically saves your progress in your browser's local storage — so if you reload the page on the same device, your work will be restored.</p>
+      <p>To <strong>save a permanent file</strong> or share your character, click <code>↓ SAVE JSON</code> in the toolbar at the bottom of the character sheet. This downloads a <code>.json</code> file you can keep anywhere.</p>
+      <p>To <strong>load a saved character</strong> on any device or browser, click <code>↑ LOAD JSON</code> and select your saved file. Your full character state — attributes, skills, SPIKE level, HP, and all notes — will be restored instantly.</p>
+      <p>To start fresh, click <code>✕ RESET</code>. You'll be asked to confirm before anything is cleared.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>UGD // SPIKE: WHISPERED ECHOES // OPERATIVE PORTAL</span>
+    <span>■ CC BY-NC 4.0 // DESIGN BY SPENCER YOUNG ■</span>
+    <span>■ CLASSIFIED // AUTHORIZED PERSONNEL ONLY ■</span>
+  </div>
+</div>
+
+<script>
+const PASS = 'MelonBalls420';
+const SKEY = 'spike_auth_player_we';
+
+function checkPass() {
+  const val = document.getElementById('passInput').value;
+  const err = document.getElementById('lock-error');
+  if (val === PASS) {
+    sessionStorage.setItem(SKEY, '1');
+    unlock();
+  } else {
+    err.classList.remove('visible');
+    void err.offsetWidth;
+    err.classList.add('visible');
+    document.getElementById('passInput').value = '';
+    document.getElementById('passInput').focus();
+  }
+}
+
+function unlock() {
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('main-content').style.display = 'flex';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem(SKEY) === '1') {
+    unlock();
+  } else {
+    document.getElementById('passInput').focus();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('lock-screen').style.display !== 'none') {
+    checkPass();
+  }
+});
+</script>
+</body>
+</html>
